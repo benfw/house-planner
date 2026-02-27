@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10-Year House Plan</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+
+  .app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .top-bar { padding: 10px 20px; background: #fff; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; display: flex; align-items: baseline; gap: 12px; }
+  .top-bar h1 { font-size: 20px; font-weight: 700; }
+  .top-bar span { font-size: 13px; color: #94a3b8; }
+
+  .two-pane { display: flex; flex: 1; overflow: hidden; }
+
+  .left-pane { width: 320px; min-width: 280px; background: #fff; border-right: 1px solid #e2e8f0; overflow-y: auto; padding: 14px 16px; flex-shrink: 0; }
+  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin: 14px 0 8px; }
+  .section-label:first-child { margin-top: 0; }
+
+  .sg { margin-bottom: 10px; }
+  .sg-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+  .sg-label { font-size: 12.5px; font-weight: 500; color: #475569; }
+  .sg-val { font-size: 12.5px; font-weight: 700; color: #2563eb; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; height: 5px; -webkit-appearance: none; appearance: none; background: #e2e8f0; border-radius: 3px; outline: none; cursor: pointer; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #2563eb; cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #2563eb; cursor: pointer; border: 2px solid #fff; }
+  .sg-range { display: flex; justify-content: space-between; font-size: 9.5px; color: #cbd5e1; margin-top: 1px; }
+  .sep { border: none; border-top: 1px solid #f1f5f9; margin: 12px 0; }
+  .toggle-btn { font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; background: none; border: none; padding: 0; }
+  .toggle-btn:hover { color: #1e293b; }
+  #adv-sliders { display: none; margin-top: 8px; }
+
+  .right-pane { flex: 1; overflow-y: auto; padding: 14px 18px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+  .mc { background: #fff; border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,.05); border: 1px solid #f1f5f9; }
+  .mc-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  .mc-value { font-size: 18px; font-weight: 700; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .mc-sub { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+
+  .card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); border: 1px solid #f1f5f9; margin-bottom: 12px; }
+  .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #64748b; margin-bottom: 8px; }
+
+  .chart-wrap { position: relative; width: 100%; }
+
+  .breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .breakdown h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .bdr { display: flex; justify-content: space-between; font-size: 12.5px; padding: 2px 0; }
+  .bdr-l { color: #64748b; }
+  .bdr-v { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .bdr-total { border-top: 1px solid #e2e8f0; padding-top: 5px; margin-top: 4px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; }
+
+  .green { color: #16a34a; } .red { color: #dc2626; } .blue { color: #2563eb; } .gray { color: #94a3b8; }
+
+  #detail-section { display: none; margin-top: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  th { background: #f8fafc; color: #64748b; padding: 3px 5px; text-align: right; font-weight: 600; white-space: nowrap; }
+  td { padding: 3px 5px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .tbl-label { font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 12px 0 4px; }
+
+  @media (max-width: 900px) {
+    .two-pane { flex-direction: column; }
+    .left-pane { width: 100%; max-height: 40vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
+    .metrics { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top-bar">
+    <h1>10-Year House Plan</h1>
+    <span>Drag sliders to explore scenarios</span>
+  </div>
+  <div class="two-pane">
+    <!-- LEFT PANE -->
+    <div class="left-pane">
+      <div class="section-label">House</div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">House Price</span><span class="sg-val" id="v-hp"></span></div><input type="range" id="s-hp" min="2000000" max="5500000" step="100000" value="4000000"><div class="sg-range"><span>$2.0M</span><span>$5.5M</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Down Payment</span><span class="sg-val" id="v-dp"></span></div><input type="range" id="s-dp" min="0.2" max="0.8" step="0.05" value="0.5"><div class="sg-range"><span>20%</span><span>80%</span></div></div>
+
+      <hr class="sep">
+      <div class="section-label">Income</div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Ben Year-1 Salary</span><span class="sg-val" id="v-by1"></span></div><input type="range" id="s-by1" min="100000" max="300000" step="10000" value="200000"><div class="sg-range"><span>$100K</span><span>$300K</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Ben Peak Salary (Yr 10)</span><span class="sg-val" id="v-bpk"></span></div><input type="range" id="s-bpk" min="200000" max="500000" step="10000" value="350000"><div class="sg-range"><span>$200K</span><span>$500K</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Jenise Works</span><span class="sg-val" id="v-jy"></span></div><input type="range" id="s-jy" min="0" max="8" step="1" value="5"><div class="sg-range"><span>0 yrs</span><span>8 yrs</span></div></div>
+
+      <hr class="sep">
+      <div class="section-label">Spending</div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Living Expenses</span><span class="sg-val" id="v-exp"></span></div><input type="range" id="s-exp" min="250000" max="700000" step="10000" value="500000"><div class="sg-range"><span>$250K</span><span>$700K</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Monthly Rent (alt)</span><span class="sg-val" id="v-rent"></span></div><input type="range" id="s-rent" min="8000" max="25000" step="500" value="15000"><div class="sg-range"><span>$8.0K</span><span>$25.0K</span></div></div>
+
+      <hr class="sep">
+      <div class="section-label">Target</div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">NW Goal at Year 10</span><span class="sg-val" id="v-tgt"></span></div><input type="range" id="s-tgt" min="4000000" max="12000000" step="500000" value="8000000"><div class="sg-range"><span>$4.0M</span><span>$12.0M</span></div></div>
+
+      <hr class="sep">
+      <button class="toggle-btn" id="adv-toggle" onclick="toggleAdv()">▶ Advanced</button>
+      <div id="adv-sliders">
+        <div class="sg"><div class="sg-header"><span class="sg-label">Expense Inflation</span><span class="sg-val" id="v-ei"></span></div><input type="range" id="s-ei" min="0.01" max="0.06" step="0.005" value="0.03"><div class="sg-range"><span>1.0%</span><span>6.0%</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Pre-Ret Return</span><span class="sg-val" id="v-prr"></span></div><input type="range" id="s-prr" min="0.03" max="0.08" step="0.005" value="0.055"><div class="sg-range"><span>3.0%</span><span>8.0%</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Post-Ret Return</span><span class="sg-val" id="v-por"></span></div><input type="range" id="s-por" min="0.02" max="0.06" step="0.005" value="0.04"><div class="sg-range"><span>2.0%</span><span>6.0%</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Mortgage Rate</span><span class="sg-val" id="v-mr"></span></div><input type="range" id="s-mr" min="0.05" max="0.085" step="0.0025" value="0.0675"><div class="sg-range"><span>5.0%</span><span>8.5%</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Home Appreciation</span><span class="sg-val" id="v-apr"></span></div><input type="range" id="s-apr" min="0.01" max="0.06" step="0.005" value="0.04"><div class="sg-range"><span>1.0%</span><span>6.0%</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Earned Income Tax</span><span class="sg-val" id="v-etx"></span></div><input type="range" id="s-etx" min="0.35" max="0.55" step="0.01" value="0.50"><div class="sg-range"><span>35%</span><span>55%</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Investment Tax</span><span class="sg-val" id="v-itx"></span></div><input type="range" id="s-itx" min="0.20" max="0.45" step="0.01" value="0.35"><div class="sg-range"><span>20%</span><span>45%</span></div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE -->
+    <div class="right-pane">
+      <div class="metrics">
+        <div class="mc"><div class="mc-label">Buy: Year 10 NW</div><div class="mc-value" id="m-bnw"></div><div class="mc-sub" id="m-bgap"></div></div>
+        <div class="mc"><div class="mc-label">Rent: Year 10 NW</div><div class="mc-value" id="m-rnw"></div><div class="mc-sub" id="m-rgap"></div></div>
+        <div class="mc"><div class="mc-label">Buy: Liquid Assets</div><div class="mc-value" id="m-bliq"></div><div class="mc-sub" id="m-bport"></div></div>
+        <div class="mc"><div class="mc-label">Monthly Mortgage</div><div class="mc-value blue" id="m-mpmt"></div><div class="mc-sub" id="m-down"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Net Worth Trajectory</div>
+        <div class="chart-wrap" style="height:320px"><canvas id="nw-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Annual Cash Flow (incl. investment returns &amp; IRA)</div>
+        <div class="chart-wrap" style="height:240px"><canvas id="cf-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Year 10 Breakdown</div>
+        <div class="breakdown">
+          <div>
+            <h3 class="blue">Buy Scenario</h3>
+            <div id="bd-buy"></div>
+          </div>
+          <div>
+            <h3 class="red">Rent Scenario</h3>
+            <div id="bd-rent"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <button class="toggle-btn" onclick="toggleTable()">▶ Year-by-Year Detail</button>
+        <div id="detail-section">
+          <div class="tbl-label blue">Buy Projection</div>
+          <div style="overflow-x:auto"><table id="tbl-buy"></table></div>
+          <div class="tbl-label red" style="margin-top:14px">Rent Projection</div>
+          <div style="overflow-x:auto"><table id="tbl-rent"></table></div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#cbd5e1;padding:10px 0;">Ben (51) &amp; Jenise (56) — Portola Valley, CA</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =========== FORMATTING ===========
+const $ = id => document.getElementById(id);
+const F = v => {
+  const a = Math.abs(v), s = v < 0 ? "-" : "";
+  if (a >= 1e6) return s + "$" + (a/1e6).toFixed(2) + "M";
+  if (a >= 1e3) return s + "$" + (a/1e3).toFixed(0) + "K";
+  return s + "$" + a.toFixed(0);
+};
+const Fa = v => {
+  const a = Math.abs(v), s = v < 0 ? "-" : "";
+  if (a >= 1e6) return s + (a/1e6).toFixed(1) + "M";
+  if (a >= 1e3) return s + (a/1e3).toFixed(0) + "K";
+  return String(v);
+};
+const P = v => (v * 100).toFixed(1) + "%";
+
+// =========== FIXED PARAMS ===========
+const FIX = {
+  benY0: 75000, jenY1: 150000, jenGrowth: 0.02, retTax: 0.40,
+  iraGrowth: 0.055, mtgTerm: 30, propTaxRate: 0.0115, insurance: 18000,
+  maintPct: 0.01, genInfl: 0.03, rentInfl: 0.03, benSS: 24000, jenSS: 18000,
+  ssCola: 0.025, iraWd: 60000, iraTax: 0.40, liquid: 8600000, ira: 770000,
+  benAge0: 51, jenAge0: 56, benRet: 62, iraStartAge: 60, horizon: 10
+};
+
+// =========== PROJECTION ENGINE ===========
+function run(p, mode) {
+  const dp = p.housePrice * p.dpPct;
+  const mtg = p.housePrice - dp;
+  const rMo = p.mtgRate / 12, nMo = p.mtgTerm * 12;
+  const moPmt = mtg > 0 ? mtg * rMo * Math.pow(1+rMo,nMo) / (Math.pow(1+rMo,nMo)-1) : 0;
+  const annPmt = moPmt * 12;
+  const rentAnn = p.monthlyRent * 12;
+  let port = mode === "buy" ? p.liquid - dp : p.liquid;
+  let ira = p.ira;
+  const rows = [];
+
+  for (let yr = 0; yr <= p.horizon; yr++) {
+    const bAge = p.benAge0 + yr, jAge = p.jenAge0 + yr;
+    const jRetAge = p.jenAge0 + p.jenYears;
+    const bRet = bAge >= p.benRet, jRet = jAge >= jRetAge;
+    const bothRet = bRet && jRet;
+
+    let bInc = 0;
+    if (!bRet) { if (yr===0) bInc=p.benY0; else if (yr===1) bInc=p.benY1; else bInc=p.benY1+(p.benPeak-p.benY1)*(yr-1)/(p.horizon-1); }
+    let jInc = 0;
+    if (!jRet) { if (yr===0) jInc=0; else if (yr===1) jInc=p.jenY1; else jInc=p.jenY1*Math.pow(1+p.jenGrowth,yr-1); }
+
+    const bSS = bAge >= 62 ? p.benSS*Math.pow(1+p.ssCola,yr) : 0;
+    const jSS = jAge >= 62 ? p.jenSS*Math.pow(1+p.ssCola,yr) : 0;
+    const ss = bSS + jSS;
+    const gross = bInc + jInc + ss;
+    const tax = bothRet ? (bInc+jInc+ss)*p.retTax : (bInc+jInc)*p.earnedTax + ss*p.retTax;
+    const net = gross - tax;
+    const living = p.livingExp * Math.pow(1+p.expInfl, yr);
+
+    let housing = 0;
+    if (mode==="buy") housing = annPmt + p.housePrice*Math.pow(1+p.appreciation,yr)*(p.propTaxRate+p.maintPct) + p.insurance*Math.pow(1+p.genInfl,yr);
+    else housing = rentAnn * Math.pow(1+p.rentInfl, yr);
+
+    const cf = net - living - housing;
+    const iraNWd = jAge >= p.iraStartAge ? p.iraWd*(1-p.iraTax) : 0;
+    const iraGWd = jAge >= p.iraStartAge ? p.iraWd : 0;
+
+    const pBoy = port;
+    const rr = bothRet ? p.postRetReturn : p.preRetReturn;
+    const invRet = pBoy * rr * (1 - p.invTax);
+    const pEoy = pBoy + invRet + cf + iraNWd;
+
+    if (yr===0) ira = (p.ira - iraGWd) * (1+p.iraGrowth);
+    else ira = (ira - iraGWd) * (1+p.iraGrowth);
+
+    let hv=0, mb=0, eq=0;
+    if (mode==="buy") {
+      hv = p.housePrice * Math.pow(1+p.appreciation, yr);
+      if (yr===0) mb = mtg;
+      else mb = mtg*Math.pow(1+rMo,yr*12) - moPmt*(Math.pow(1+rMo,yr*12)-1)/rMo;
+      eq = hv - mb;
+    }
+
+    rows.push({yr, bAge, jAge, bInc, jInc, ss, net, living, housing, cf, iraNWd, pBoy, invRet, port: pEoy, ira, hv, mb, eq, nw: pEoy+ira+eq});
+    port = pEoy;
+  }
+  return { rows, moPmt, dp };
+}
+
+// =========== CHARTS ===========
+let nwChart, cfChart;
+
+function initCharts() {
+  const nwCtx = $('nw-chart').getContext('2d');
+  nwChart = new Chart(nwCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [
+      { label: 'Buy: Net Worth', borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.08)', borderWidth: 3, pointRadius: 3, fill: false, tension: 0.2 },
+      { label: 'Rent: Net Worth', borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,.08)', borderWidth: 3, pointRadius: 3, fill: false, tension: 0.2 },
+      { label: 'Buy: Equity', borderColor: '#2563eb', borderWidth: 1.5, borderDash: [5,5], pointRadius: 0, fill: false, tension: 0.2 },
+      { label: 'Buy: Portfolio', borderColor: '#10b981', borderWidth: 1.5, borderDash: [5,5], pointRadius: 0, fill: false, tension: 0.2 },
+      { label: 'Target', borderColor: '#f59e0b', borderWidth: 2, borderDash: [8,4], pointRadius: 0, fill: false },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true, pointStyle: 'line' }},
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + F(ctx.parsed.y) }}
+      },
+      scales: {
+        x: { title: { display: true, text: 'Year', font: { size: 11 }}},
+        y: { ticks: { callback: Fa, font: { size: 10 }}}
+      }
+    }
+  });
+
+  const cfCtx = $('cf-chart').getContext('2d');
+  cfChart = new Chart(cfCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'Buy', backgroundColor: '#3b82f6', borderRadius: 2 },
+      { label: 'Rent', backgroundColor: '#ef4444', borderRadius: 2 },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }}},
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + F(ctx.parsed.y) }}
+      },
+      scales: {
+        x: { grid: { display: false }},
+        y: { ticks: { callback: Fa, font: { size: 10 }}}
+      }
+    }
+  });
+}
+
+// =========== UPDATE ===========
+function update() {
+  const p = {
+    housePrice: +$('s-hp').value, dpPct: +$('s-dp').value,
+    livingExp: +$('s-exp').value, benY1: +$('s-by1').value,
+    benPeak: +$('s-bpk').value, monthlyRent: +$('s-rent').value,
+    jenYears: +$('s-jy').value, expInfl: +$('s-ei').value,
+    preRetReturn: +$('s-prr').value, postRetReturn: +$('s-por').value,
+    mtgRate: +$('s-mr').value, appreciation: +$('s-apr').value,
+    earnedTax: +$('s-etx').value, invTax: +$('s-itx').value,
+    ...FIX
+  };
+  const tgt = +$('s-tgt').value;
+
+  // Update slider labels
+  $('v-hp').textContent = F(p.housePrice);
+  $('v-dp').textContent = P(p.dpPct);
+  $('v-exp').textContent = F(p.livingExp);
+  $('v-by1').textContent = F(p.benY1);
+  $('v-bpk').textContent = F(p.benPeak);
+  $('v-rent').textContent = "$" + (p.monthlyRent/1000).toFixed(1) + "K/mo";
+  $('v-jy').textContent = p.jenYears + " yrs";
+  $('v-tgt').textContent = F(tgt);
+  $('v-ei').textContent = P(p.expInfl);
+  $('v-prr').textContent = P(p.preRetReturn);
+  $('v-por').textContent = P(p.postRetReturn);
+  $('v-mr').textContent = P(p.mtgRate);
+  $('v-apr').textContent = P(p.appreciation);
+  $('v-etx').textContent = P(p.earnedTax);
+  $('v-itx').textContent = P(p.invTax);
+
+  // Run projections
+  const buy = run(p, "buy");
+  const rent = run(p, "rent");
+  const bf = buy.rows[buy.rows.length-1];
+  const rf = rent.rows[rent.rows.length-1];
+  const bHit = bf.nw >= tgt, rHit = rf.nw >= tgt;
+
+  // Metrics
+  $('m-bnw').textContent = F(bf.nw);
+  $('m-bnw').className = "mc-value " + (bHit ? "green" : "red");
+  $('m-bgap').textContent = bHit ? "Target met" : F(tgt - bf.nw) + " gap";
+
+  $('m-rnw').textContent = F(rf.nw);
+  $('m-rnw').className = "mc-value " + (rHit ? "green" : "red");
+  $('m-rgap').textContent = rHit ? "Target met" : F(tgt - rf.nw) + " gap";
+
+  $('m-bliq').textContent = F(bf.port + bf.ira);
+  $('m-bport').textContent = "Portfolio " + F(bf.port);
+
+  $('m-mpmt').textContent = F(buy.moPmt);
+  $('m-down').textContent = F(buy.dp) + " down";
+
+  // Charts
+  const labels = buy.rows.map(r => r.yr);
+  const tgtLine = labels.map(() => tgt);
+
+  nwChart.data.labels = labels;
+  nwChart.data.datasets[0].data = buy.rows.map(r => r.nw);
+  nwChart.data.datasets[1].data = rent.rows.map(r => r.nw);
+  nwChart.data.datasets[2].data = buy.rows.map(r => r.eq);
+  nwChart.data.datasets[3].data = buy.rows.map(r => r.port);
+  nwChart.data.datasets[4].data = tgtLine;
+  nwChart.update('none');
+
+  cfChart.data.labels = labels;
+  cfChart.data.datasets[0].data = buy.rows.map(r => r.cf + r.invRet + r.iraNWd);
+  cfChart.data.datasets[1].data = rent.rows.map(r => r.cf + r.invRet + r.iraNWd);
+  cfChart.update('none');
+
+  // Breakdown
+  const cumRent = rent.rows.reduce((s,r) => s + r.housing, 0);
+  $('bd-buy').innerHTML = bdRows([
+    ["Portfolio", bf.port, bf.port < 500000 ? "red" : ""],
+    ["IRA", bf.ira, ""], ["Home Equity", bf.eq, ""],
+    ["Home Value", bf.hv, "gray"], ["Mortgage Bal", -bf.mb, "gray"]
+  ]) + `<div class="bdr-total"><span>Total NW</span><span class="${bHit?'green':'red'}">${F(bf.nw)}</span></div>`;
+
+  $('bd-rent').innerHTML = bdRows([
+    ["Portfolio", rf.port, rf.port < 500000 ? "red" : ""],
+    ["IRA", rf.ira, ""], ["Cumul. Rent", -cumRent, "gray"]
+  ]) + `<div class="bdr-total"><span>Total NW</span><span class="${rHit?'green':'red'}">${F(rf.nw)}</span></div>`;
+
+  // Tables
+  buildTable('tbl-buy', buy.rows, true);
+  buildTable('tbl-rent', rent.rows, false);
+}
+
+function bdRows(items) {
+  return items.map(([l,v,c]) => `<div class="bdr"><span class="bdr-l">${l}</span><span class="bdr-v ${c}">${F(v)}</span></div>`).join('');
+}
+
+function buildTable(id, rows, isBuy) {
+  const cols = ['Yr','Ben Inc','Jen Inc','SS','Net Inc','Living','Housing','Cash Flow','Portfolio','IRA'];
+  if (isBuy) cols.push('Equity');
+  cols.push('Net Worth');
+
+  let h = '<thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+  for (const r of rows) {
+    const vals = [r.yr, F(r.bInc), F(r.jInc), F(r.ss), F(r.net), F(r.living), F(r.housing),
+      `<span style="color:${r.cf<0?'#dc2626':'#16a34a'}">${F(r.cf)}</span>`,
+      F(r.port), F(r.ira)];
+    if (isBuy) vals.push(F(r.eq));
+    vals.push(`<b>${F(r.nw)}</b>`);
+    h += '<tr>' + vals.map(v => `<td>${v}</td>`).join('') + '</tr>';
+  }
+  $(id).innerHTML = h + '</tbody>';
+}
+
+// =========== TOGGLES ===========
+function toggleAdv() {
+  const el = $('adv-sliders');
+  const open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  $('adv-toggle').textContent = (open ? '▶' : '▼') + ' Advanced';
+}
+function toggleTable() {
+  const el = $('detail-section');
+  const open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  el.previousElementSibling.textContent = (open ? '▶' : '▼') + ' Year-by-Year Detail';
+}
+
+// =========== INIT ===========
+document.addEventListener('DOMContentLoaded', () => {
+  initCharts();
+  // Bind all sliders
+  document.querySelectorAll('input[type=range]').forEach(s => {
+    s.addEventListener('input', update);
+  });
+  update();
+});
+</script>
+</div>
+</body>
+</html>
