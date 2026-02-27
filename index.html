@@ -353,9 +353,9 @@ function update() {
   nwChart.data.datasets[4].data = tgtLine;
   nwChart.update('none');
 
-  cfChart.data.labels = labels;
-  cfChart.data.datasets[0].data = buy.rows.map(r => r.cf + r.invRet + r.iraNWd);
-  cfChart.data.datasets[1].data = rent.rows.map(r => r.cf + r.invRet + r.iraNWd);
+  cfChart.data.labels = buy.rows.slice(1).map(r => r.yr);
+  cfChart.data.datasets[0].data = buy.rows.slice(1).map(r => r.cf + r.invRet + r.iraNWd);
+  cfChart.data.datasets[1].data = rent.rows.slice(1).map(r => r.cf + r.invRet + r.iraNWd);
   cfChart.update('none');
 
   // Breakdown
