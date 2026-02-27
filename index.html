@@ -194,14 +194,13 @@ function run(p, mode) {
 
   for (let yr = 0; yr <= p.horizon; yr++) {
     const bAge = p.benAge0 + yr, jAge = p.jenAge0 + yr;
-    const jRetAge = p.jenAge0 + p.jenYears;
-    const bRet = bAge >= p.benRet, jRet = jAge >= jRetAge;
-    const bothRet = bRet && jRet;
+    const bRet = bAge >= p.benRet;
+    const jWorking = yr >= 1 && yr <= p.jenYears;
+    const bothRet = bRet && !jWorking;
 
     let bInc = 0;
     if (!bRet) { bInc = yr === 0 ? p.benY0 : p.benAvg; }
-    let jInc = 0;
-    if (!jRet) { jInc = yr === 0 ? 0 : p.jenAvg; }
+    let jInc = jWorking ? p.jenAvg : 0;
 
     const bSS = bAge >= 62 ? p.benSS*Math.pow(1+p.ssCola,yr) : 0;
     const jSS = jAge >= 62 ? p.jenSS*Math.pow(1+p.ssCola,yr) : 0;
