@@ -95,7 +95,7 @@
 
       <hr class="sep">
       <div class="section-label">Target</div>
-      <div class="sg"><div class="sg-header"><span class="sg-label">NW Goal at Year 9</span><span class="sg-val" id="v-tgt"></span></div><input type="range" id="s-tgt" min="4000000" max="12000000" step="500000" value="8000000"><div class="sg-range"><span>$4.0M</span><span>$12.0M</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">NW Goal at Year 10</span><span class="sg-val" id="v-tgt"></span></div><input type="range" id="s-tgt" min="4000000" max="12000000" step="500000" value="8000000"><div class="sg-range"><span>$4.0M</span><span>$12.0M</span></div></div>
 
       <hr class="sep">
       <button class="toggle-btn" id="adv-toggle" onclick="toggleAdv()">▶ Advanced</button>
@@ -113,8 +113,8 @@
     <!-- RIGHT PANE -->
     <div class="right-pane">
       <div class="metrics">
-        <div class="mc"><div class="mc-label">Buy: Year 9 NW</div><div class="mc-value" id="m-bnw"></div><div class="mc-sub" id="m-bgap"></div></div>
-        <div class="mc"><div class="mc-label">Rent: Year 9 NW</div><div class="mc-value" id="m-rnw"></div><div class="mc-sub" id="m-rgap"></div></div>
+        <div class="mc"><div class="mc-label">Buy: Year 10 NW</div><div class="mc-value" id="m-bnw"></div><div class="mc-sub" id="m-bgap"></div></div>
+        <div class="mc"><div class="mc-label">Rent: Year 10 NW</div><div class="mc-value" id="m-rnw"></div><div class="mc-sub" id="m-rgap"></div></div>
         <div class="mc"><div class="mc-label">Buy: Liquid Assets</div><div class="mc-value" id="m-bliq"></div><div class="mc-sub" id="m-bport"></div></div>
         <div class="mc"><div class="mc-label">Monthly Mortgage</div><div class="mc-value blue" id="m-mpmt"></div><div class="mc-sub" id="m-down"></div></div>
       </div>
@@ -128,7 +128,7 @@
         <div class="chart-wrap" style="height:240px"><canvas id="cf-chart"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-title">Year 9 Breakdown</div>
+        <div class="card-title">Year 10 Breakdown</div>
         <div class="breakdown">
           <div>
             <h3 class="blue">Buy Scenario</h3>
@@ -195,7 +195,7 @@ function run(p, mode) {
   for (let yr = 0; yr <= p.horizon; yr++) {
     const bAge = p.benAge0 + yr, jAge = p.jenAge0 + yr;
     const bRet = bAge >= p.benRet;
-    const jWorking = yr >= 1 && yr <= p.jenYears;
+    const jWorking = yr >= 1 && yr <= p.jenYears + 1;
     const bothRet = bRet && !jWorking;
 
     let bInc = 0;
@@ -322,8 +322,8 @@ function update() {
   // Run projections
   const buy = run(p, "buy");
   const rent = run(p, "rent");
-  const bf = buy.rows[buy.rows.length-2];
-  const rf = rent.rows[rent.rows.length-2];
+  const bf = buy.rows[buy.rows.length-1];
+  const rf = rent.rows[rent.rows.length-1];
   const bHit = bf.nw >= tgt, rHit = rf.nw >= tgt;
 
   // Metrics
@@ -342,20 +342,20 @@ function update() {
   $('m-down').textContent = F(buy.dp) + " down";
 
   // Charts
-  const labels = buy.rows.slice(0, -1).map(r => r.yr);
+  const labels = buy.rows.map(r => r.yr);
   const tgtLine = labels.map(() => tgt);
 
   nwChart.data.labels = labels;
-  nwChart.data.datasets[0].data = buy.rows.slice(0, -1).map(r => r.nw);
-  nwChart.data.datasets[1].data = rent.rows.slice(0, -1).map(r => r.nw);
-  nwChart.data.datasets[2].data = buy.rows.slice(0, -1).map(r => r.eq);
-  nwChart.data.datasets[3].data = buy.rows.slice(0, -1).map(r => r.port);
+  nwChart.data.datasets[0].data = buy.rows.map(r => r.nw);
+  nwChart.data.datasets[1].data = rent.rows.map(r => r.nw);
+  nwChart.data.datasets[2].data = buy.rows.map(r => r.eq);
+  nwChart.data.datasets[3].data = buy.rows.map(r => r.port);
   nwChart.data.datasets[4].data = tgtLine;
   nwChart.update('none');
 
-  cfChart.data.labels = labels.slice(0, -1);
-  cfChart.data.datasets[0].data = buy.rows.slice(0, -1).map(r => r.cf + r.invRet + r.iraNWd);
-  cfChart.data.datasets[1].data = rent.rows.slice(0, -1).map(r => r.cf + r.invRet + r.iraNWd);
+  cfChart.data.labels = labels;
+  cfChart.data.datasets[0].data = buy.rows.map(r => r.cf + r.invRet + r.iraNWd);
+  cfChart.data.datasets[1].data = rent.rows.map(r => r.cf + r.invRet + r.iraNWd);
   cfChart.update('none');
 
   // Breakdown
