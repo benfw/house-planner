@@ -94,16 +94,12 @@
       <div class="sg"><div class="sg-header"><span class="sg-label">Monthly Rent (alt)</span><span class="sg-val" id="v-rent"></span></div><input type="range" id="s-rent" min="8000" max="25000" step="500" value="15000"><div class="sg-range"><span>$8.0K</span><span>$25.0K</span></div></div>
 
       <hr class="sep">
-      <div class="section-label">Target</div>
-      <div class="sg"><div class="sg-header"><span class="sg-label">NW Goal at Year 10</span><span class="sg-val" id="v-tgt"></span></div><input type="range" id="s-tgt" min="4000000" max="12000000" step="500000" value="8000000"><div class="sg-range"><span>$4.0M</span><span>$12.0M</span></div></div>
-
-      <hr class="sep">
       <button class="toggle-btn" id="adv-toggle" onclick="toggleAdv()">▶ Advanced</button>
       <div id="adv-sliders">
         <div class="sg"><div class="sg-header"><span class="sg-label">Expense Inflation</span><span class="sg-val" id="v-ei"></span></div><input type="range" id="s-ei" min="0.01" max="0.06" step="0.005" value="0.03"><div class="sg-range"><span>1.0%</span><span>6.0%</span></div></div>
         <div class="sg"><div class="sg-header"><span class="sg-label">Pre-Ret Return</span><span class="sg-val" id="v-prr"></span></div><input type="range" id="s-prr" min="0.03" max="0.08" step="0.005" value="0.055"><div class="sg-range"><span>3.0%</span><span>8.0%</span></div></div>
         <div class="sg"><div class="sg-header"><span class="sg-label">Post-Ret Return</span><span class="sg-val" id="v-por"></span></div><input type="range" id="s-por" min="0.02" max="0.06" step="0.005" value="0.04"><div class="sg-range"><span>2.0%</span><span>6.0%</span></div></div>
-        <div class="sg"><div class="sg-header"><span class="sg-label">Mortgage Rate</span><span class="sg-val" id="v-mr"></span></div><input type="range" id="s-mr" min="0.05" max="0.085" step="0.0025" value="0.0675"><div class="sg-range"><span>5.0%</span><span>8.5%</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Mortgage Rate</span><span class="sg-val" id="v-mr"></span></div><input type="range" id="s-mr" min="0.05" max="0.085" step="0.0025" value="0.06"><div class="sg-range"><span>5.0%</span><span>8.5%</span></div></div>
         <div class="sg"><div class="sg-header"><span class="sg-label">Home Appreciation</span><span class="sg-val" id="v-apr"></span></div><input type="range" id="s-apr" min="0.01" max="0.06" step="0.005" value="0.04"><div class="sg-range"><span>1.0%</span><span>6.0%</span></div></div>
         <div class="sg"><div class="sg-header"><span class="sg-label">Earned Income Tax</span><span class="sg-val" id="v-etx"></span></div><input type="range" id="s-etx" min="0.35" max="0.55" step="0.01" value="0.50"><div class="sg-range"><span>35%</span><span>55%</span></div></div>
         <div class="sg"><div class="sg-header"><span class="sg-label">Investment Tax</span><span class="sg-val" id="v-itx"></span></div><input type="range" id="s-itx" min="0.20" max="0.45" step="0.01" value="0.35"><div class="sg-range"><span>20%</span><span>45%</span></div></div>
@@ -300,8 +296,6 @@ function update() {
     earnedTax: +$('s-etx').value, invTax: +$('s-itx').value,
     ...FIX
   };
-  const tgt = +$('s-tgt').value;
-
   // Update slider labels
   $('v-hp').textContent = F(p.housePrice);
   $('v-dp').textContent = P(p.dpPct);
@@ -310,7 +304,6 @@ function update() {
   $('v-jsal').textContent = F(p.jenSal);
   $('v-rent').textContent = "$" + (p.monthlyRent/1000).toFixed(1) + "K/mo";
   $('v-jy').textContent = p.jenYears + " yrs";
-  $('v-tgt').textContent = F(tgt);
   $('v-ei').textContent = P(p.expInfl);
   $('v-prr').textContent = P(p.preRetReturn);
   $('v-por').textContent = P(p.postRetReturn);
@@ -324,6 +317,7 @@ function update() {
   const rent = run(p, "rent");
   const bf = buy.rows[buy.rows.length-1];
   const rf = rent.rows[rent.rows.length-1];
+  const tgt = buy.rows[0].nw;
   const bHit = bf.nw >= tgt, rHit = rf.nw >= tgt;
 
   // Metrics
