@@ -32,6 +32,7 @@
   .toggle-btn { font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; background: none; border: none; padding: 0; }
   .toggle-btn:hover { color: #1e293b; }
   #adv-sliders { display: none; margin-top: 8px; }
+  #disaster-sliders { display: none; margin-top: 8px; }
 
   .right-pane { flex: 1; overflow-y: auto; padding: 14px 18px; }
 
@@ -92,6 +93,17 @@
       <div class="section-label">Spending</div>
       <div class="sg"><div class="sg-header"><span class="sg-label">Living Expenses</span><span class="sg-val" id="v-exp"></span></div><input type="range" id="s-exp" min="250000" max="700000" step="10000" value="500000"><div class="sg-range"><span>$250K</span><span>$700K</span></div></div>
       <div class="sg"><div class="sg-header"><span class="sg-label">Monthly Rent (alt)</span><span class="sg-val" id="v-rent"></span></div><input type="range" id="s-rent" min="8000" max="25000" step="500" value="15000"><div class="sg-range"><span>$8.0K</span><span>$25.0K</span></div></div>
+
+      <hr class="sep">
+      <button class="toggle-btn" id="disaster-toggle" onclick="toggleDisaster()">▶ Disasters</button>
+      <div id="disaster-sliders">
+        <div class="section-label">Real Estate Crash</div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Crash Year</span><span class="sg-val" id="v-reyr"></span></div><input type="range" id="s-reyr" min="1" max="10" step="1" value="3"><div class="sg-range"><span>1</span><span>10</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Severity</span><span class="sg-val" id="v-resev"></span></div><input type="range" id="s-resev" min="0" max="0.50" step="0.05" value="0"><div class="sg-range"><span>0%</span><span>50%</span></div></div>
+        <div class="section-label">Equity Market Crash</div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Crash Year</span><span class="sg-val" id="v-eqyr"></span></div><input type="range" id="s-eqyr" min="1" max="10" step="1" value="3"><div class="sg-range"><span>1</span><span>10</span></div></div>
+        <div class="sg"><div class="sg-header"><span class="sg-label">Severity</span><span class="sg-val" id="v-eqsev"></span></div><input type="range" id="s-eqsev" min="0" max="0.50" step="0.05" value="0"><div class="sg-range"><span>0%</span><span>50%</span></div></div>
+      </div>
 
       <hr class="sep">
       <button class="toggle-btn" id="adv-toggle" onclick="toggleAdv()">▶ Advanced</button>
@@ -186,6 +198,7 @@ function run(p, mode) {
   const rentAnn = p.monthlyRent * 12;
   let port = mode === "buy" ? p.liquid - dp : p.liquid;
   let ira = p.ira;
+  let hvAdj = 1;  // cumulative RE crash adjustment
   const rows = [];
 
   for (let yr = 0; yr <= p.horizon; yr++) {
@@ -214,7 +227,10 @@ function run(p, mode) {
     const iraNWd = jAge >= p.iraStartAge ? p.iraWd*(1-p.iraTax) : 0;
     const iraGWd = jAge >= p.iraStartAge ? p.iraWd : 0;
 
-    const pBoy = port;
+    // Apply equity market crash at start of crash year
+    let pBoy = port;
+    if (yr === p.eqCrashYr && p.eqCrashSev > 0) pBoy *= (1 - p.eqCrashSev);
+
     const rr = bothRet ? p.postRetReturn : p.preRetReturn;
     const invRet = pBoy * rr * (1 - p.invTax);
     const pEoy = pBoy + invRet + cf + iraNWd;
@@ -222,9 +238,12 @@ function run(p, mode) {
     if (yr===0) ira = (p.ira - iraGWd) * (1+p.iraGrowth);
     else ira = (ira - iraGWd) * (1+p.iraGrowth);
 
+    // Apply RE crash — permanently reduces home value from crash year onward
+    if (yr === p.reCrashYr && p.reCrashSev > 0) hvAdj *= (1 - p.reCrashSev);
+
     let hv=0, mb=0, eq=0;
     if (mode==="buy") {
-      hv = p.housePrice * Math.pow(1+p.appreciation, yr);
+      hv = p.housePrice * Math.pow(1+p.appreciation, yr) * hvAdj;
       if (yr===0) mb = mtg;
       else mb = mtg*Math.pow(1+rMo,yr*12) - moPmt*(Math.pow(1+rMo,yr*12)-1)/rMo;
       eq = hv - mb;
@@ -294,6 +313,8 @@ function update() {
     preRetReturn: +$('s-prr').value, postRetReturn: +$('s-por').value,
     mtgRate: +$('s-mr').value, appreciation: +$('s-apr').value,
     earnedTax: +$('s-etx').value, invTax: +$('s-itx').value,
+    reCrashYr: +$('s-reyr').value, reCrashSev: +$('s-resev').value,
+    eqCrashYr: +$('s-eqyr').value, eqCrashSev: +$('s-eqsev').value,
     ...FIX
   };
   // Update slider labels
@@ -311,6 +332,10 @@ function update() {
   $('v-apr').textContent = P(p.appreciation);
   $('v-etx').textContent = P(p.earnedTax);
   $('v-itx').textContent = P(p.invTax);
+  $('v-reyr').textContent = "Yr " + p.reCrashYr;
+  $('v-resev').textContent = P(p.reCrashSev);
+  $('v-eqyr').textContent = "Yr " + p.eqCrashYr;
+  $('v-eqsev').textContent = P(p.eqCrashSev);
 
   // Run projections
   const buy = run(p, "buy");
@@ -392,6 +417,12 @@ function buildTable(id, rows, isBuy) {
 }
 
 // =========== TOGGLES ===========
+function toggleDisaster() {
+  const el = $('disaster-sliders');
+  const open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  $('disaster-toggle').textContent = (open ? '▶' : '▼') + ' Disasters';
+}
 function toggleAdv() {
   const el = $('adv-sliders');
   const open = el.style.display === 'block';
