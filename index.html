@@ -84,9 +84,9 @@
 
       <hr class="sep">
       <div class="section-label">Income</div>
-      <div class="sg"><div class="sg-header"><span class="sg-label">Ben Salary Average</span><span class="sg-val" id="v-bavg"></span></div><input type="range" id="s-bavg" min="100000" max="500000" step="10000" value="275000"><div class="sg-range"><span>$100K</span><span>$500K</span></div></div>
-      <div class="sg"><div class="sg-header"><span class="sg-label">Jenise Salary Average</span><span class="sg-val" id="v-javg"></span></div><input type="range" id="s-javg" min="100000" max="500000" step="10000" value="150000"><div class="sg-range"><span>$100K</span><span>$500K</span></div></div>
-      <div class="sg"><div class="sg-header"><span class="sg-label">Jenise Works</span><span class="sg-val" id="v-jy"></span></div><input type="range" id="s-jy" min="0" max="10" step="1" value="5"><div class="sg-range"><span>0 yrs</span><span>10 yrs</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Ben Salary</span><span class="sg-val" id="v-bsal"></span></div><input type="range" id="s-bsal" min="0" max="500000" step="10000" value="200000"><div class="sg-range"><span>$0</span><span>$500K</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Jenise Salary</span><span class="sg-val" id="v-jsal"></span></div><input type="range" id="s-jsal" min="0" max="500000" step="10000" value="200000"><div class="sg-range"><span>$0</span><span>$500K</span></div></div>
+      <div class="sg"><div class="sg-header"><span class="sg-label">Jenise Works</span><span class="sg-val" id="v-jy"></span></div><input type="range" id="s-jy" min="0" max="9" step="1" value="5"><div class="sg-range"><span>0 yrs</span><span>9 yrs</span></div></div>
 
       <hr class="sep">
       <div class="section-label">Spending</div>
@@ -199,8 +199,8 @@ function run(p, mode) {
     const bothRet = bRet && !jWorking;
 
     let bInc = 0;
-    if (!bRet) { bInc = yr === 0 ? p.benY0 : p.benAvg; }
-    let jInc = jWorking ? p.jenAvg : 0;
+    if (!bRet) { bInc = yr === 0 ? p.benY0 : p.benSal * Math.pow(1 + p.expInfl, yr - 1); }
+    let jInc = jWorking ? p.jenSal * Math.pow(1 + p.expInfl, yr - 1) : 0;
 
     const bSS = bAge >= 62 ? p.benSS*Math.pow(1+p.ssCola,yr) : 0;
     const jSS = jAge >= 62 ? p.jenSS*Math.pow(1+p.ssCola,yr) : 0;
@@ -292,8 +292,8 @@ function initCharts() {
 function update() {
   const p = {
     housePrice: +$('s-hp').value, dpPct: +$('s-dp').value,
-    livingExp: +$('s-exp').value, benAvg: +$('s-bavg').value,
-    jenAvg: +$('s-javg').value, monthlyRent: +$('s-rent').value,
+    livingExp: +$('s-exp').value, benSal: +$('s-bsal').value,
+    jenSal: +$('s-jsal').value, monthlyRent: +$('s-rent').value,
     jenYears: +$('s-jy').value, expInfl: +$('s-ei').value,
     preRetReturn: +$('s-prr').value, postRetReturn: +$('s-por').value,
     mtgRate: +$('s-mr').value, appreciation: +$('s-apr').value,
@@ -306,8 +306,8 @@ function update() {
   $('v-hp').textContent = F(p.housePrice);
   $('v-dp').textContent = P(p.dpPct);
   $('v-exp').textContent = F(p.livingExp);
-  $('v-bavg').textContent = F(p.benAvg);
-  $('v-javg').textContent = F(p.jenAvg);
+  $('v-bsal').textContent = F(p.benSal);
+  $('v-jsal').textContent = F(p.jenSal);
   $('v-rent').textContent = "$" + (p.monthlyRent/1000).toFixed(1) + "K/mo";
   $('v-jy').textContent = p.jenYears + " yrs";
   $('v-tgt').textContent = F(tgt);
